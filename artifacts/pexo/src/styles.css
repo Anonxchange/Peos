@@ -4625,7 +4625,7 @@ html.dark .webflow-auth-shell .auth-button:where(.w-variant-80454ff6-0e3c-af76-c
 
 .export-page .sp-sec{padding:72px 0}
 
-.export-page .sp-h{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;font-size:clamp(26px,3.2vw,42px);line-height:1.12;letter-spacing:-.01em;color:#091e1c;margin:0}
+.export-page .sp-h{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;font-size:clamp(26px,3.2vw,42px);line-height:1.12;letter-spacing:-.01em;color:#0c1111;margin:0}
 
 .export-page .sp-h.center{text-align:center;margin-bottom:36px}
 
@@ -4685,13 +4685,13 @@ html.dark .webflow-auth-shell .auth-button:where(.w-variant-80454ff6-0e3c-af76-c
 
 .export-page .sp-rev .st{color:#14924f;font-size:20px;letter-spacing:3px}
 
-.export-page .sp-rev p{margin:0;font-size:18px;line-height:1.55;color:#1f2d28;flex:1}
+.export-page .sp-rev p{margin:0;font-size:18px;line-height:1.55;color:#464646;flex:1}
 
 .export-page .sp-rev .by{display:flex;justify-content:space-between;align-items:center;font-size:15px}
 
 .export-page .sp-rev .by b{font-size:18px}
 
-.export-page .sp-rev .by span{display:flex;gap:8px;align-items:center;color:#4a5a55}
+.export-page .sp-rev .by span{display:flex;gap:8px;align-items:center;color:#464646}
 
 .export-page .sp-rev i{width:24px;height:24px;border-radius:50%;background:#d8ff85;display:grid;place-items:center;font-style:normal;font-size:13px;color:#091e1c}
 

@@ -31,7 +31,7 @@ const HERO_COINS = [
 ];
 
 const HERO_CSS = `
-.pxg .ph-hero{--ph-bg:#fff;--ph-ink:#091e1c;--ph-mute:#52625f;--ph-line:#e3ebe9;--ph-lime:#d9f99d;--ph-chip:#f3f7f6;background:var(--ph-bg);color:var(--ph-ink);padding:40px 20px 36px;text-align:center;overflow:hidden}
+.pxg .ph-hero{--ph-bg:#fff;--ph-ink:var(--_color---typography--cyan,#0c1111);--ph-mute:var(--_color---typography--dark-gray,#464646);--ph-line:#e3ebe9;--ph-lime:#d9f99d;--ph-chip:#f3f7f6;background:var(--ph-bg);color:var(--ph-ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;padding:40px 20px 36px;text-align:center;overflow:hidden}
 .pxg .ph-hero .ph-wrap{max-width:1100px;margin:0 auto}
 .export-page .pxg .ph-hero h1{font-size:clamp(42px,8.4vw,92px);line-height:.98;letter-spacing:-.045em;font-weight:800;margin:0;color:var(--ph-ink)}
 .pxg .ph-hero .ph-sub{max-width:520px;margin:14px auto 0;color:var(--ph-mute);font-size:clamp(16px,2vw,19px);line-height:1.5}
@@ -222,7 +222,7 @@ function useSectionCounts() {
 }
 
 const SHELF_CSS = `
-.pxg .gs{--gs-ink:#091e1c;--gs-mute:#52625f;--gs-line:#e3ebe9;--gs-field:#f3f7f6;color:var(--gs-ink)}
+.pxg .gs{--gs-ink:var(--_color---typography--cyan,#0c1111);--gs-mute:var(--_color---typography--dark-gray,#464646);--gs-line:#e3ebe9;--gs-field:#f3f7f6;color:var(--gs-ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 .pxg .gs .gs-w{max-width:1320px;margin:0 auto;padding:0 16px}
 .pxg .gs .gs-cty{display:flex;align-items:center;gap:10px;padding:14px 0 6px;font-size:14px;font-weight:600;color:var(--gs-mute)}
 .pxg .gs .gs-cty select{font-family:inherit;font-weight:700;font-size:14px;color:var(--gs-ink);background:var(--gs-field);border:1.5px solid var(--gs-line);border-radius:999px;padding:8px 14px;max-width:70vw;cursor:pointer}
@@ -249,7 +249,7 @@ const SHELF_CSS = `
 .pxg .gs .gs-art{position:relative;aspect-ratio:1.586;border-radius:14px;overflow:hidden;display:grid;place-items:center;border:1px solid var(--gs-line);background:#fff;transition:transform .2s}
 .pxg .gs .gs-tile:hover .gs-art{transform:translateY(-4px)}
 .pxg .gs .gs-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;max-width:none}
-.pxg .gs .gs-fb{padding:10px;text-align:center;font-weight:800;font-size:15px;color:#45524f}
+.pxg .gs .gs-fb{padding:10px;text-align:center;font-weight:700;font-size:15px;color:var(--gs-mute)}
 .pxg .gs .gs-tn{margin-top:9px;font-weight:700;font-size:14px;line-height:1.25;color:var(--gs-ink)}
 .pxg .gs .gs-ts{margin-top:2px;font-size:12.5px;color:var(--gs-mute);font-variant-numeric:tabular-nums}
 .pxg .gs .gs-sk{aspect-ratio:1.586;border-radius:14px;background:linear-gradient(90deg,#eef2f1,#f7f9f8,#eef2f1);background-size:200% 100%;animation:gs-pulse 1.2s linear infinite}
