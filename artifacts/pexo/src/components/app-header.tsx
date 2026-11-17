@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { PexlyLogo } from "@/components/pexly-logo";
 import { useAuth } from "@/lib/auth-context";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 import { Check, Search, ShoppingCart, User } from "@/lib/icons";
 import { HeaderSearch } from "@/components/header-search";
 import { CartSheet } from "@/components/shop/CartSheet";

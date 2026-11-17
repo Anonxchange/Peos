@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
-import { useExtraWallet } from "@/lib/extra-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
+import { useExtraWallet } from "@/lib/extra-wallet-context";
 import { useWalletAccountLink } from "@/hooks/use-wallet-account-link";
 import type { WalletAsset } from "@/lib/wallet-assets";
 
@@ -41,8 +41,8 @@ export function WalletConnectionGate({ asset, children }: { asset?: WalletAsset;
       ? "Connect and verify your wallet to use the selected network."
       : `Use a ${asset.chainName} mainnet wallet. An Ethereum address cannot receive ${asset.symbol} on this network. Connection does not link this non-EVM address to your Pexly account.`}</p>
     {(error || (isEvm && link.error)) && <p role="alert" className="text-xs text-destructive">{error || link.error}</p>}
-    {!checking && <Button type="button" disabled={connecting || link.linking || !wallet.configured} onClick={() => void connect()}>
-      {connecting || link.linking ? "Please confirm in wallet…" : failed ? "Retry" : needsLink ? "Verify and link wallet" : `Connect ${isEvm ? "wallet" : asset.chainName}`}
+    {!checking && <Button type="button" disabled={connecting || link.linking || !wallet.configured || (!isEvm && extra.loading)} onClick={() => void connect()}>
+      {!isEvm && extra.loading ? "Loading wallet tools…" : connecting || link.linking ? "Please confirm in wallet…" : failed ? "Retry" : needsLink ? "Verify and link wallet" : `Connect ${isEvm ? "wallet" : asset.chainName}`}
     </Button>}
   </div>;
 }

@@ -3,7 +3,7 @@ import { useSignMessage } from "wagmi";
 import { createSiweMessage } from "viem/siwe";
 import { useAuth } from "@/lib/auth-context";
 import { getSupabase } from "@/lib/supabase";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 
 type WalletLinkStatus = "loading" | "error" | "unlinked" | "disconnected" | "linked" | "different";
 

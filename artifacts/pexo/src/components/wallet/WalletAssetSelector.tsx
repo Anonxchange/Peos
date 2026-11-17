@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 import { useWalletPortfolio } from "@/hooks/use-wallet-portfolio";
 
 export function useWalletSelection(open: boolean, initialSymbol?: string) {

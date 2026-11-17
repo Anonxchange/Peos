@@ -1,87 +1,24 @@
 import {
-  createContext,
+  memo,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
-import { WagmiProvider, useAccount, useDisconnect, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
+import { useAccount, useDisconnect, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { isAddress, parseEther, parseUnits, type Address } from "viem";
 import {
   evmNetworkById,
-  isReownConfigured,
   transactionExplorerUrl,
   wagmiConfig,
 } from "./reown-config";
 import { clearWalletQueryCaches } from "./wallet-query-cache";
-import { ExtraWalletProvider } from "./extra-wallet-provider";
-
-export interface EvmWalletActivity {
-  hash: `0x${string}`;
-  to: string;
-  amount: string;
-  symbol: string;
-  chainId: number;
-  chainName: string;
-  explorerUrl?: string;
-  createdAt: string;
-}
-
-export interface SendNativeInput {
-  to: string;
-  amount: string;
-  symbol: string;
-  chainId: number;
-}
-
-export interface SendTokenInput extends SendNativeInput {
-  tokenAddress: string;
-  decimals: number;
-}
-
-export interface EvmWalletContextValue {
-  configured: boolean;
-  isConnected: boolean;
-  isConnecting: boolean;
-  address?: Address;
-  chainId?: number;
-  chainName?: string;
-  error?: string;
-  openConnect: () => void;
-  openNetworkSwitcher: () => void;
-  openAccount: () => void;
-  disconnect: () => Promise<void>;
-  switchNetwork: (chainId: number) => Promise<void>;
-  sendNative: (input: SendNativeInput) => Promise<`0x${string}`>;
-  sendToken: (input: SendTokenInput) => Promise<`0x${string}`>;
-  recentActivity: EvmWalletActivity[];
-}
-
-const unavailableWallet: EvmWalletContextValue = {
-  configured: false,
-  isConnected: false,
-  isConnecting: false,
-  openConnect: () => undefined,
-  openNetworkSwitcher: () => undefined,
-  openAccount: () => undefined,
-  disconnect: async () => undefined,
-  switchNetwork: async () => {
-    throw new Error("Wallet connection is not configured.");
-  },
-  sendNative: async () => {
-    throw new Error("Wallet connection is not configured.");
-  },
-  sendToken: async () => {
-    throw new Error("Wallet connection is not configured.");
-  },
-  recentActivity: [],
-};
-
-const EvmWalletContext = createContext<EvmWalletContextValue>(unavailableWallet);
+import { ExtraWalletRuntime } from "./extra-wallet-provider";
+import type { ExtraWalletContextValue } from "./extra-wallet-context";
+import type { EvmWalletActivity, EvmWalletContextValue, SendNativeInput, SendTokenInput } from "./wallet-provider";
+export { wagmiConfig };
 
 function validateTransfer(to: string, amount: string, chainId: number) {
   if (!isAddress(to)) {
@@ -95,7 +32,10 @@ function validateTransfer(to: string, amount: string, chainId: number) {
   }
 }
 
-function WalletBridge({ children }: { children: ReactNode }) {
+function WalletBridge({ onChange, onExtraChange }: {
+  onChange: (value: EvmWalletContextValue) => void;
+  onExtraChange: (value: ExtraWalletContextValue) => void;
+}) {
   const [recentActivity, setRecentActivity] = useState<EvmWalletActivity[]>([]);
   const account = useAccount();
   const previousWalletRef = useRef<{
@@ -288,27 +228,8 @@ function WalletBridge({ children }: { children: ReactNode }) {
     ],
   );
 
-  return (
-    <EvmWalletContext.Provider value={contextValue}>
-      {children}
-    </EvmWalletContext.Provider>
-  );
+  useEffect(() => { onChange(contextValue); }, [onChange, contextValue]);
+  return <ExtraWalletRuntime onChange={onExtraChange} />;
 }
-
-export function EvmWalletProvider({ children }: { children: ReactNode }) {
-  return (
-    <WagmiProvider config={wagmiConfig}>
-      {isReownConfigured ? (
-        <WalletBridge><ExtraWalletProvider>{children}</ExtraWalletProvider></WalletBridge>
-      ) : (
-        <EvmWalletContext.Provider value={unavailableWallet}>
-          {children}
-        </EvmWalletContext.Provider>
-      )}
-    </WagmiProvider>
-  );
-}
-
-export function useEvmWallet() {
-  return useContext(EvmWalletContext);
-}
+// Stable sibling bridge: SDK state updates never remount the application.
+export const WalletRuntime = memo(WalletBridge);

@@ -23,8 +23,8 @@ function walletData({ connected = false, failed = false, loading = false, funded
       }),
     },
     "@/lib/crypto-prices": { useCryptoPrices: () => ({ data: { ETH: { current_price: 100 } }, refetch }) },
-    "@/lib/reown-config": { evmNetworkById: new Map() },
-    "@/lib/evm-wallet-provider": { useEvmWallet: () => ({ configured: true, isConnected: connected, address: connected ? "0x1111111111111111111111111111111111111111" : undefined }) },
+    "@/lib/wallet-networks": { evmNetworkById: new Map() },
+    "@/lib/wallet-provider": { useEvmWallet: () => ({ configured: true, isConnected: connected, address: connected ? "0x1111111111111111111111111111111111111111" : undefined }) },
   };
   vm.runInNewContext(ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },

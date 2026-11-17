@@ -2,8 +2,8 @@ import { useCallback, useMemo } from "react";
 import { formatUnits, zeroAddress, type Address } from "viem";
 import { useBalance, useReadContracts } from "wagmi";
 import { useCryptoPrices } from "@/lib/crypto-prices";
-import { evmNetworkById } from "@/lib/reown-config";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { evmNetworkById } from "@/lib/wallet-networks";
+import { useEvmWallet } from "@/lib/wallet-provider";
 
 const erc20BalanceAbi = [
   {

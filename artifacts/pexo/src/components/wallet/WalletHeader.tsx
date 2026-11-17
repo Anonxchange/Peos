@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 import { useWalletPortfolio } from "@/hooks/use-wallet-portfolio";
-import { useExtraWallet } from "@/lib/extra-wallet-provider";
+import { useExtraWallet } from "@/lib/extra-wallet-context";
 import { Eye, EyeOff, Copy, Send, WalletAdd, ChevronDown, LogOut, AlertCircle } from "@/lib/icons";
 import { useToast } from "@/hooks/use-toast";
 

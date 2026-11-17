@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useState } from "react";
 import { useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import { useAppKitConnection, type Provider as SolanaProvider } from "@reown/appkit-adapter-solana/react";
 import type { TronConnector } from "@reown/appkit-adapter-tron";
@@ -6,29 +6,17 @@ import { solana, tronMainnet } from "@reown/appkit/networks";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { address as bitcoinAddress, networks as bitcoinNetworks } from "bitcoinjs-lib";
 import SatsWallet, { AddressPurpose } from "sats-connect";
-import { isReownConfigured, solanaWalletNetwork, tronWalletNetwork } from "./reown-config";
-import { transferUnits, type WalletAsset, type WalletNamespace } from "./wallet-assets";
+import { solanaWalletNetwork, tronWalletNetwork } from "./reown-config";
+import { transferUnits, type WalletAsset } from "./wallet-assets";
 import { sendTronNative } from "./send-tron";
-
-type ExtraNamespace = Exclude<WalletNamespace, "eip155">;
-interface ExtraWalletContext {
-  addresses: Partial<Record<ExtraNamespace, string>>;
-  connect: (namespace: ExtraNamespace) => Promise<void>;
-  disconnect: () => Promise<void>;
-  readBalance: (asset: WalletAsset, signal?: AbortSignal) => Promise<number>;
-  send: (asset: WalletAsset, to: string, amount: string) => Promise<string>;
-}
-const unavailable = async (): Promise<never> => { throw new Error("Wallet connection is not configured."); };
-const Context = createContext<ExtraWalletContext>({
-  addresses: {}, connect: unavailable, disconnect: unavailable, readBalance: unavailable, send: unavailable,
-});
+import type { ExtraNamespace, ExtraWalletContextValue } from "./extra-wallet-context";
 
 function validateBitcoinAddress(address: string) {
   try { bitcoinAddress.toOutputScript(address, bitcoinNetworks.bitcoin); }
   catch { throw new Error("Use a valid Bitcoin mainnet payment address."); }
 }
 
-function ExtraWalletBridge({ children }: { children: ReactNode }) {
+function ExtraWalletBridge({ onChange }: { onChange: (value: ExtraWalletContextValue) => void }) {
   const appKit = useAppKit();
   const solanaAccount = useAppKitAccount({ namespace: "solana" });
   const tronAccount = useAppKitAccount({ namespace: "tron" });
@@ -40,7 +28,7 @@ function ExtraWalletBridge({ children }: { children: ReactNode }) {
   const [btcAddress, setBtcAddress] = useState<string>();
   const solanaMainnet = solanaAccount.caipAddress?.startsWith(`${solana.caipNetworkId}:`);
   const tronMainnetConnected = tronAccount.caipAddress?.startsWith(`${tronMainnet.caipNetworkId}:`);
-  const addresses: ExtraWalletContext["addresses"] = {
+  const addresses: ExtraWalletContextValue["addresses"] = {
     bitcoin: btcAddress,
     solana: solanaAccount.isConnected && solanaMainnet ? solanaAccount.address : undefined,
     tron: tronAccount.isConnected && tronMainnetConnected ? tronAccount.address : undefined,
@@ -148,7 +136,8 @@ function ExtraWalletBridge({ children }: { children: ReactNode }) {
     return sendTronNative(tronProvider, from, to, units);
   }
 
-  return <Context.Provider value={{
+  const value: ExtraWalletContextValue = {
+    loading: false,
     addresses, connect, readBalance, send,
     disconnect: async () => {
       await Promise.all([
@@ -157,12 +146,8 @@ function ExtraWalletBridge({ children }: { children: ReactNode }) {
         ...(tronAccount.isConnected ? [disconnect({ namespace: "tron" })] : []),
       ]);
     },
-  }}>{children}</Context.Provider>;
+  };
+  useEffect(() => { onChange(value); });
+  return null;
 }
-
-export function ExtraWalletProvider({ children }: { children: ReactNode }) {
-  return isReownConfigured
-    ? <ExtraWalletBridge>{children}</ExtraWalletBridge>
-    : <Context.Provider value={{ addresses: {}, connect: unavailable, disconnect: unavailable, readBalance: unavailable, send: unavailable }}>{children}</Context.Provider>;
-}
-export const useExtraWallet = () => useContext(Context);
+export const ExtraWalletRuntime = memo(ExtraWalletBridge);

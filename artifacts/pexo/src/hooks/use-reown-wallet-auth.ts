@@ -3,7 +3,7 @@ import { useAccount, useSignMessage } from "wagmi";
 import { createSiweMessage } from "viem/siwe";
 import type { User } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 
 type WalletAuthResult =
   | { status: "connection-opened" }

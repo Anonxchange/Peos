@@ -121,8 +121,8 @@ function extraWallet({ bitcoinAccount = btcFrom, wrongNetwork = false } = {}) {
   };
   const result = load("lib/extra-wallet-provider.tsx", {
     "react/jsx-runtime": { jsx: (type, props) => ({ type, props }) },
-    react: { createContext: value => ({ Provider: "Provider", value }), useContext: context => context.value,
-      useEffect: () => {}, useState: () => [btcFrom, () => {}] },
+    react: { memo: component => component,
+      useEffect: effect => { effect(); }, useState: () => [btcFrom, () => {}] },
     "@reown/appkit/react": {
       useAppKit: () => ({ open: async () => {} }),
       useAppKitAccount: ({ namespace }) => configuredAccounts[namespace],
@@ -151,8 +151,9 @@ function extraWallet({ bitcoinAccount = btcFrom, wrongNetwork = false } = {}) {
       addListener: () => () => {}, disconnect: async () => {},
     } },
   });
-  const element = result.ExtraWalletProvider({ children: null });
-  return { wallet: element.type(element.props).props.value, sent };
+  let wallet;
+  result.ExtraWalletRuntime({ onChange: value => { wallet = value; } });
+  return { wallet, sent };
 }
 const native = (namespace, address) => ({ ...helpers.extraCoins.find(coin => coin.namespace === namespace), address, isNative: true });
 

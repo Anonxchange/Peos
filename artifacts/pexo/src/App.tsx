@@ -10,7 +10,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
-import { EvmWalletProvider } from "@/lib/evm-wallet-provider";
+import { EvmWalletProvider } from "@/lib/wallet-provider";
 import { CartProvider } from "@/hooks/use-shopify-cart";
 
 // Deferred — invisible until triggered, no need to block initial paint

@@ -5,7 +5,7 @@ import { SendCryptoDialog } from "@/components/send-crypto-dialog";
 import { ReceiveCryptoDialog } from "@/components/receive-crypto-dialog";
 import { WalletHeader } from "@/components/wallet/WalletHeader";
 import { AssetList } from "@/components/wallet/AssetList";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
 import { useWalletPortfolio } from "@/hooks/use-wallet-portfolio";
 import { useWalletAccountLink } from "@/hooks/use-wallet-account-link";
 import { RecentActivity } from "@/components/wallet/RecentActivity";

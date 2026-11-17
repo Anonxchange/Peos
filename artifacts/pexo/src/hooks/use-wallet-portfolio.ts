@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useCryptoPrices } from "@/lib/crypto-prices";
-import { useEvmWallet } from "@/lib/evm-wallet-provider";
-import { useExtraWallet } from "@/lib/extra-wallet-provider";
+import { useEvmWallet } from "@/lib/wallet-provider";
+import { useExtraWallet } from "@/lib/extra-wallet-context";
 import { extraCoins, groupWalletCoins, type WalletAsset } from "@/lib/wallet-assets";
 import { useEvmWalletData } from "./use-evm-wallet-data";
 
