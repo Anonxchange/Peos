@@ -1,3 +1,4 @@
+import "./page-styles/physical-products.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CurrentMarketingPage } from "@/components/marketing/current-marketing-page";
 import {

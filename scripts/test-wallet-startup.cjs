@@ -80,3 +80,16 @@ test("Pexly icons come only from Hugeicons", () => {
     }
   }
 });
+
+test("marketing CSS is split into the same lazy route bundles as its pages", () => {
+  const pages = path.join(root, "pages/current-html");
+  const globalCss = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  const homepageCss = fs.readFileSync(path.join(pages, "page-styles/home.css"), "utf8");
+  const aboutCss = fs.readFileSync(path.join(pages, "page-styles/about-us.css"), "utf8");
+
+  assert.match(fs.readFileSync(path.join(pages, "home.tsx"), "utf8"), /page-styles\/home\.css/);
+  assert.match(fs.readFileSync(path.join(pages, "about-us.tsx"), "utf8"), /page-styles\/about-us\.css/);
+  assert.match(homepageCss, /\.v3-hero-banner/);
+  assert.match(aboutCss, /\.section-about-hero/);
+  assert.doesNotMatch(globalCss, /\.v3-hero-banner|\.section-about-hero/);
+});

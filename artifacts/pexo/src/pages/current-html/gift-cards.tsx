@@ -1,4 +1,5 @@
 "use client";
+import "./page-styles/gift-cards.css";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CurrentMarketingPage } from "@/components/marketing/current-marketing-page";
 import { useGiftCardCategories, useGiftCardProducts, type ReloadlyCategory, type ReloadlyProduct } from "@/hooks/use-reloadly";

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { CurrentMarketingPage } from "@/components/marketing/current-marketing-page";
+import "./page-styles/home.css";
 
 export function PexlyHomepage() {
   const [newsletterStatus, setNewsletterStatus] = useState("");
