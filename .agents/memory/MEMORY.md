@@ -1,0 +1,1 @@
+- [Marketplace scope](marketplace-scope.md) — imported Pezx; universal discovery must cover digital services and physical goods without mixing country preferences.
