@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEvmWallet } from "@/lib/evm-wallet-provider";
-import { useEvmWalletData } from "@/hooks/use-evm-wallet-data";
+import { useWalletPortfolio } from "@/hooks/use-wallet-portfolio";
+import { useExtraWallet } from "@/lib/extra-wallet-provider";
 import { Eye, EyeOff, Copy, Send, WalletAdd, ChevronDown, LogOut, AlertCircle } from "@/lib/icons";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,19 +14,23 @@ interface WalletHeaderProps {
 
 export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
   const wallet = useEvmWallet();
-  const { assets, totalUsd, isLoading, error } = useEvmWalletData();
+  const { assets, totalUsd, isLoading, error, isConnected } = useWalletPortfolio();
+  const extra = useExtraWallet();
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const hasAssets = assets.some((asset) => asset.balance > 0);
   const hasKnownBalance = assets.some((asset) => asset.balanceStatus === "ready");
   const hasUnavailableBalance = assets.some((asset) => asset.balanceStatus !== "ready");
-  const addressLabel = wallet.address ? `${wallet.address.slice(0, 7)}…${wallet.address.slice(-5)}` : "";
+  const otherAccount = Object.entries(extra.addresses).find(([, address]) => !!address);
+  const activeAddress = wallet.address ?? otherAccount?.[1];
+  const activeNetwork = wallet.address ? wallet.chainName : otherAccount?.[0].toUpperCase();
+  const addressLabel = activeAddress ? `${activeAddress.slice(0, 7)}…${activeAddress.slice(-5)}` : "";
   const walletError = wallet.error || "";
 
   const copyAddress = async () => {
-    if (!wallet.address) return;
+    if (!activeAddress) return;
     try {
-      await navigator.clipboard.writeText(wallet.address);
+      await navigator.clipboard.writeText(activeAddress);
       toast({ title: "Address copied", description: "Your wallet address is on the clipboard." });
     } catch {
       toast({ title: "Copy unavailable", description: "Select the address and copy it manually." });
@@ -50,7 +55,7 @@ export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
 
   const disconnect = async () => {
     try {
-      await wallet.disconnect();
+      await Promise.all([...(wallet.isConnected ? [wallet.disconnect()] : []), extra.disconnect()]);
     } catch (reason) {
       toast({ title: "Could not disconnect", description: reason instanceof Error ? reason.message : "Please try again." });
     }
@@ -59,7 +64,7 @@ export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
   return (
     <div className="bg-[#eaf1e3] dark:bg-card overflow-hidden transition-colors">
       <div className="p-5 sm:p-6">
-        {!wallet.isConnected ? (
+        {!isConnected ? (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-2">Wallet balance</div>
@@ -97,13 +102,13 @@ export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[#d4dfce] pt-4">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#5c8a42]" />
-                <span className="text-sm font-semibold">{wallet.chainName || "Connected network"}</span>
+                <span className="text-sm font-semibold">{activeNetwork || "Connected network"}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="font-mono text-xs text-muted-foreground">{addressLabel}</span>
                 <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy wallet address" onClick={() => void copyAddress()}><Copy className="h-3.5 w-3.5" /></Button>
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => void changeNetwork()}><ChevronDown className="h-3.5 w-3.5" />Network</Button>
+                {wallet.isConnected && <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => void changeNetwork()}><ChevronDown className="h-3.5 w-3.5" />Network</Button>}
                 <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground" onClick={() => void disconnect()}><LogOut className="h-3.5 w-3.5" />Disconnect</Button>
               </div>
             </div>

@@ -16,7 +16,7 @@ const source = ts.transpileModule(fs.readFileSync(
   `${__dirname}/../supabase/functions/link-wallet/index.ts`, "utf8",
 ), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 
-function gateway(allowedOrigins = previewOrigin) {
+function gateway() {
   let handler;
   let clientCalls = 0;
   const nonces = new Map();
@@ -64,8 +64,10 @@ function gateway(allowedOrigins = previewOrigin) {
     console: { error: () => {} },
     Deno: {
       serve: callback => { handler = callback; },
-      env: { get: name => name === "SIWE_ALLOWED_ORIGINS" ? allowedOrigins
-        : name === "SUPABASE_URL" ? "https://supabase.example.invalid" : "test-only-not-a-credential" },
+      env: { get: name => {
+        assert.notEqual(name, "SIWE_ALLOWED_ORIGINS", "Development must not need an origin secret");
+        return name === "SUPABASE_URL" ? "https://supabase.example.invalid" : "test-only-not-a-credential";
+      } },
     },
     require: name => {
       if (name === "npm:@supabase/supabase-js@2") return { createClient };
@@ -110,28 +112,29 @@ test("configured preview preflight permits current Supabase headers without touc
     "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": requested.join(","),
   } });
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("Access-Control-Allow-Origin"), previewOrigin);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
   const allowed = response.headers.get("Access-Control-Allow-Headers").split(",").map(value => value.trim());
   requested.forEach(header => assert.ok(allowed.includes(header), header));
   assert.equal(response.headers.get("Vary"), "Origin");
   assert.equal(edge.clientCalls(), 0);
 });
 
-test("missing, unrelated and lookalike origins remain rejected", async () => {
+test("development accepts all browser origins and requests without Origin", async () => {
   for (const origin of [null, "https://untrusted.replit.dev", "https://preview.example.test.attacker.invalid"]) {
     const edge = gateway();
     const response = await edge.invoke({}, { method: "OPTIONS", origin });
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
     assert.equal(edge.clientCalls(), 0);
   }
 });
 
-test("default production origins and comma-separated additional origins remain supported", async () => {
-  const edge = gateway(` ${previewOrigin}, https://second.example.test `);
+test("production and arbitrary development origins work without allowlist configuration", async () => {
+  const edge = gateway();
   for (const origin of ["https://pexly.app", previewOrigin, "https://second.example.test"]) {
     const response = await edge.invoke({}, { method: "OPTIONS", origin });
     assert.equal(response.status, 200);
-    assert.equal(response.headers.get("Access-Control-Allow-Origin"), origin);
+    assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
   }
 });
 

@@ -65,7 +65,7 @@ const tokenDefinitions: TokenDefinition[] = [
     symbol: "USDT",
     chainId: 137,
     chainName: "Polygon",
-    address: "0xc2132d05d31c914a87c6611c10748aacba5a600",
+    address: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
     decimals: 6,
   },
   {

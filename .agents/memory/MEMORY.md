@@ -1,2 +1,3 @@
 - [Marketplace scope](marketplace-scope.md) — imported Pezx; universal discovery must cover digital services and physical goods without mixing country preferences.
-- [Wallet coin visibility](wallet-coins.md) — show every supported coin regardless of wallet connection or balance; keep the existing design.
+- [Wallet coin visibility](wallet-coins.md) — always-visible grouped coins, per-action network choices, missing native coins, and development origin policy.
+- [Wallet connector constraints](wallet-connector-constraints.md) — the Reown Bitcoin adapter pins a firewall-blocked dependency; do not bypass or force an incompatible override.

@@ -61,10 +61,12 @@ export function useWalletAccountLink() {
 
   const status: WalletLinkStatus = !user?.id
     ? "unlinked"
-    : loading || loadedUserId !== user.id
+    : loading
       ? "loading"
       : error
         ? "error"
+        : loadedUserId !== user.id
+          ? "loading"
         : !linkedAddress
           ? "unlinked"
           : !wallet.isConnected || !wallet.address

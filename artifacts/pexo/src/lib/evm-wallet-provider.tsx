@@ -18,6 +18,7 @@ import {
   wagmiConfig,
 } from "./reown-config";
 import { clearWalletQueryCaches } from "./wallet-query-cache";
+import { ExtraWalletProvider } from "./extra-wallet-provider";
 
 export interface EvmWalletActivity {
   hash: `0x${string}`;
@@ -201,6 +202,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
         throw new Error("Amount must be greater than zero.");
       }
       const hash = await sendTransactionAsync({
+        account: account.address,
         to: to as Address,
         value,
         chainId,
@@ -208,7 +210,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
       addRecentActivity({ to, amount, symbol, chainId }, hash);
       return hash;
     },
-    [addRecentActivity, ensureNetwork, sendTransactionAsync],
+    [account.address, addRecentActivity, ensureNetwork, sendTransactionAsync],
   );
 
   const sendToken = useCallback(
@@ -226,6 +228,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
         throw new Error("Amount must be greater than zero.");
       }
       const hash = await writeContractAsync({
+        account: account.address,
         address: tokenAddress as Address,
         abi: [
           {
@@ -246,7 +249,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
       addRecentActivity({ to, amount, symbol, chainId }, hash);
       return hash;
     },
-    [addRecentActivity, ensureNetwork, writeContractAsync],
+    [account.address, addRecentActivity, ensureNetwork, writeContractAsync],
   );
 
   const contextValue = useMemo<EvmWalletContextValue>(
@@ -296,7 +299,7 @@ export function EvmWalletProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       {isReownConfigured ? (
-        <WalletBridge>{children}</WalletBridge>
+        <WalletBridge><ExtraWalletProvider>{children}</ExtraWalletProvider></WalletBridge>
       ) : (
         <EvmWalletContext.Provider value={unavailableWallet}>
           {children}

@@ -7,16 +7,6 @@ const authOptions = {
   autoRefreshToken: false,
   detectSessionInUrl: false,
 };
-const defaultAllowedOrigins = [
-  "https://pexly.com",
-  "https://www.pexly.com",
-  "https://pexly.app",
-  "https://www.pexly.app",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:5173",
-];
 const statements = {
   "sign-in": "Sign in to Pexly. This message does not authorize a transaction.",
   link: "Link this wallet to your Pexly account. This message does not authorize a transaction.",
@@ -29,37 +19,13 @@ class RequestError extends Error {
   }
 }
 
-function getAllowedOrigins() {
-  const configured = Deno.env.get("SIWE_ALLOWED_ORIGINS") ?? "";
-  return new Set(
-    [...defaultAllowedOrigins, ...configured.split(",")]
-      .map((origin) => origin.trim())
-      .filter(Boolean)
-      .map((origin) => new URL(origin).origin),
-  );
-}
-
-function requireTrustedOrigin(request: Request) {
-  const rawOrigin = request.headers.get("Origin");
-  if (!rawOrigin) throw new RequestError("A trusted browser origin is required.", 403);
-
-  let origin: string;
-  try {
-    origin = new URL(rawOrigin).origin;
-  } catch {
-    throw new RequestError("The browser origin is invalid.", 403);
-  }
-  if (!getAllowedOrigins().has(origin)) {
-    throw new RequestError("This application origin is not allowed to use wallet authentication.", 403);
-  }
-  return origin;
-}
-
-function corsHeaders(origin: string) {
+function corsHeaders(_origin?: string | null) {
   return {
-    "Access-Control-Allow-Origin": origin,
+    // Development policy requested by the app owner. This is deliberately
+    // callable from any origin; sessions, signatures and nonces remain required.
+    "Access-Control-Allow-Origin": "*",
     // Supabase JS adds platform/runtime metadata to browser function calls.
-    // Allow those known headers without trusting arbitrary request origins.
+    // Authorization uses explicit bearer tokens, not cross-site cookies.
     "Access-Control-Allow-Headers": [
       "authorization", "x-client-info", "apikey", "content-type",
       "x-supabase-client-platform", "x-supabase-client-platform-version",
@@ -73,7 +39,7 @@ function corsHeaders(origin: string) {
 function jsonResponse(
   body: Record<string, unknown>,
   status = 200,
-  origin = "null",
+  origin: string | null = null,
 ) {
   return new Response(JSON.stringify(body), {
     status,
@@ -141,7 +107,7 @@ async function verifySiweMessage(
   signature: string,
   walletAddress: string,
   purpose: "sign-in" | "link",
-  origin: string,
+  origin: string | null,
 ) {
   if (!message || !/^0x[0-9a-fA-F]+$/.test(signature)) {
     throw new RequestError("A valid SIWE message and signature are required.");
@@ -154,11 +120,16 @@ async function verifySiweMessage(
     throw new RequestError("The SIWE message is malformed.");
   }
 
-  const issuedAt = siwe.issuedAt ? Date.parse(siwe.issuedAt) : NaN;
-  const expirationTime = siwe.expirationTime ? Date.parse(siwe.expirationTime) : NaN;
+  const issuedAt = siwe.issuedAt?.getTime() ?? NaN;
+  const expirationTime = siwe.expirationTime?.getTime() ?? NaN;
   let uriOrigin = "";
+  let uriHost = "";
   try {
-    uriOrigin = siwe.uri ? new URL(siwe.uri).origin : "";
+    const uri = new URL(siwe.uri ?? "");
+    if (uri.protocol === "https:" || uri.protocol === "http:") {
+      uriOrigin = uri.origin;
+      uriHost = uri.host;
+    }
   } catch {
     // The validation below returns the same generic invalid-message response.
   }
@@ -167,8 +138,9 @@ async function verifySiweMessage(
   if (
     !siwe.address ||
     siwe.address.toLowerCase() !== walletAddress ||
-    siwe.domain !== new URL(origin).host ||
-    uriOrigin !== origin ||
+    !uriOrigin ||
+    siwe.domain !== uriHost ||
+    (origin != null && origin !== "null" && uriOrigin !== origin) ||
     siwe.version !== "1" ||
     !siwe.nonce ||
     siwe.statement !== statements[purpose] ||
@@ -222,19 +194,7 @@ async function consumeNonce(
 }
 
 Deno.serve(async (request) => {
-  let origin = "null";
-  try {
-    origin = requireTrustedOrigin(request);
-  } catch (error) {
-    const status = error instanceof RequestError ? error.status : 500;
-    const message = error instanceof RequestError
-      ? error.message
-      : "Wallet authentication is not configured.";
-    if (request.method === "OPTIONS") {
-      return new Response(message, { status, headers: corsHeaders("null") });
-    }
-    return jsonResponse({ error: message }, status);
-  }
+  const origin = request.headers.get("Origin");
 
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });

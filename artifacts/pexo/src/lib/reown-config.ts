@@ -1,5 +1,8 @@
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { SolanaAdapter } from "@reown/appkit-adapter-solana";
+import { TronAdapter } from "@reown/appkit-adapter-tron";
+import { TronLinkAdapter } from "@tronweb3/tronwallet-adapter-tronlink";
 import {
   arbitrum,
   avalanche,
@@ -8,6 +11,9 @@ import {
   mainnet,
   optimism,
   polygon,
+  solana,
+  tronMainnet,
+  type AppKitNetwork,
 } from "@reown/appkit/networks";
 import { createConfig, http } from "wagmi";
 
@@ -55,6 +61,19 @@ export function transactionExplorerUrl(chainId: number, hash: string): string | 
 
 const projectId = import.meta.env.VITE_REOWN_PROJECT_ID?.trim();
 
+// Non-EVM network metadata must not carry optional Viem EVM action types:
+// those may differ between the SDK's network and controller dependencies.
+export const solanaWalletNetwork: AppKitNetwork = {
+  id: solana.id, name: solana.name, nativeCurrency: solana.nativeCurrency,
+  rpcUrls: solana.rpcUrls, blockExplorers: solana.blockExplorers,
+  chainNamespace: "solana", caipNetworkId: solana.caipNetworkId,
+};
+export const tronWalletNetwork: AppKitNetwork = {
+  id: tronMainnet.id, name: tronMainnet.name, nativeCurrency: tronMainnet.nativeCurrency,
+  rpcUrls: tronMainnet.rpcUrls, blockExplorers: tronMainnet.blockExplorers,
+  chainNamespace: "tron", caipNetworkId: tronMainnet.caipNetworkId,
+};
+
 export const wagmiAdapter = projectId
   ? new WagmiAdapter({
       networks: evmNetworks,
@@ -64,8 +83,13 @@ export const wagmiAdapter = projectId
 
 if (projectId && wagmiAdapter) {
   createAppKit({
-    adapters: [wagmiAdapter],
-    networks: evmNetworks,
+    adapters: [
+      wagmiAdapter, new SolanaAdapter(),
+      new TronAdapter({ walletAdapters: [new TronLinkAdapter({
+        openUrlWhenWalletNotFound: false, checkTimeout: 3000,
+      })] }),
+    ],
+    networks: [...evmNetworks, solanaWalletNetwork, tronWalletNetwork],
     projectId,
     defaultNetwork: mainnet,
     metadata: {
