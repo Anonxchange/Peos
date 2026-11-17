@@ -5,8 +5,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
-import { useAccount, useDisconnect, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
+import { WagmiProvider, useAccount, useDisconnect, useSendTransaction, useSignMessage, useSwitchChain, useWriteContract } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import { isAddress, parseEther, parseUnits, type Address } from "viem";
 import {
@@ -17,7 +18,7 @@ import {
 import { clearWalletQueryCaches } from "./wallet-query-cache";
 import { ExtraWalletRuntime } from "./extra-wallet-provider";
 import type { ExtraWalletContextValue } from "./extra-wallet-context";
-import type { EvmWalletActivity, EvmWalletContextValue, SendNativeInput, SendTokenInput } from "./wallet-provider";
+import type { EvmWalletActivity, EvmWalletContextValue, RuntimeProps, SendNativeInput, SendTokenInput } from "./wallet-provider";
 export { wagmiConfig };
 
 function validateTransfer(to: string, amount: string, chainId: number) {
@@ -47,6 +48,7 @@ function WalletBridge({ onChange, onExtraChange }: {
   const { disconnectAsync } = useDisconnect();
   const { switchChainAsync } = useSwitchChain();
   const { sendTransactionAsync } = useSendTransaction();
+  const { signMessageAsync } = useSignMessage();
   const { writeContractAsync } = useWriteContract();
 
   useEffect(() => {
@@ -195,6 +197,7 @@ function WalletBridge({ onChange, onExtraChange }: {
   const contextValue = useMemo<EvmWalletContextValue>(
     () => ({
       configured: true,
+      ready: true,
       isConnected: account.isConnected,
       isConnecting:
         account.status === "connecting" || account.status === "reconnecting",
@@ -210,6 +213,7 @@ function WalletBridge({ onChange, onExtraChange }: {
       switchNetwork,
       sendNative,
       sendToken,
+      signMessage: message => signMessageAsync({ account: account.address, message }),
       recentActivity,
     }),
     [
@@ -222,6 +226,7 @@ function WalletBridge({ onChange, onExtraChange }: {
       openConnect,
       openNetworkSwitcher,
       recentActivity,
+      signMessageAsync,
       sendNative,
       sendToken,
       switchNetwork,
@@ -231,5 +236,15 @@ function WalletBridge({ onChange, onExtraChange }: {
   useEffect(() => { onChange(contextValue); }, [onChange, contextValue]);
   return <ExtraWalletRuntime onChange={onExtraChange} />;
 }
-// Stable sibling bridge: SDK state updates never remount the application.
-export const WalletRuntime = memo(WalletBridge);
+// Isolate Wagmi and Reown providers in this dynamically loaded module.
+export const WalletRuntime = memo(function WalletRuntime(props: RuntimeProps) {
+  return <WagmiProvider config={wagmiConfig}>
+    <WalletBridge {...props} />
+  </WagmiProvider>;
+});
+
+// Protected wallet routes use the same config for their Wagmi hooks. The root
+// runtime owns reconnection; this nested provider only exposes the shared state.
+export function WalletToolsRouteProvider({ children }: { children: ReactNode }) {
+  return <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>{children}</WagmiProvider>;
+}

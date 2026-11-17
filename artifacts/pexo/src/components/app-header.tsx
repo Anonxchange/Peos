@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { PexlyLogo } from "@/components/pexly-logo";
 import { useAuth } from "@/lib/auth-context";
 import { useEvmWallet } from "@/lib/wallet-provider";
-import { Check, Search, ShoppingCart, User } from "@/lib/icons";
-import { HeaderSearch } from "@/components/header-search";
-import { CartSheet } from "@/components/shop/CartSheet";
+import { Check, Search, ShoppingCart, User } from "@/components/header-icons";
+import { useCart } from "@/hooks/use-shopify-cart";
+import { useGiftCardCart } from "@/hooks/use-gift-card-cart";
+import { useTopupCart } from "@/hooks/use-topup-cart";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useGiftCardCountries } from "@/hooks/use-reloadly";
 import {
@@ -22,7 +23,13 @@ import "./app-header.css";
 import { OPEN_COUNTRY_MENU_EVENT, useCountryPreferences, type CountryScope as PreferenceScope } from "@/lib/country-preferences";
 import { useQuery } from "@tanstack/react-query";
 import { shopifyService } from "@/lib/shopify-service";
-import { toast } from "sonner";
+
+const HeaderSearch = lazy(() =>
+  import("@/components/header-search").then(module => ({ default: module.HeaderSearch })),
+);
+const CartSheet = lazy(() =>
+  import("@/components/shop/CartSheet").then(module => ({ default: module.CartSheet })),
+);
 
 type CountryScope = "shop" | "gift-card";
 
@@ -76,14 +83,14 @@ export function AppHeader() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const wallet = useEvmWallet();
+  const shopCart = useCart();
+  const giftCart = useGiftCardCart();
+  const topupCart = useTopupCart();
   const routePath = normalizeRoute(location);
   const isHomePage = routePath === "/";
   const isGiftCardsPage = routePath.startsWith("/gift-cards");
   const isTopupPage = /mobile-top-?up/.test(routePath);
   const isShopPage = routePath === "/shop" || routePath.startsWith("/shop/");
-  const giftCountriesQuery = useGiftCardCountries({
-    enabled: true,
-  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -91,6 +98,12 @@ export function AppHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
+  const [cartOpen, setCartOpen] = useState(
+    () => new URLSearchParams(window.location.search).get("openCart") === "1",
+  );
+  const giftCountriesQuery = useGiftCardCountries({
+    enabled: countryOpen,
+  });
   const preferences = useCountryPreferences();
   const shopCountry = preferences.delivery?.country;
   const giftCardCountry = preferences.digital?.country;
@@ -104,6 +117,10 @@ export function AppHeader() {
     enabled: countryOpen,
   });
   const openCartFromUrl = new URLSearchParams(window.location.search).get("openCart") === "1";
+  const cartItemCount =
+    shopCart.items.reduce((count, item) => count + item.quantity, 0) +
+    giftCart.items.reduce((count, item) => count + item.quantity, 0) +
+    topupCart.items.length;
   const walletHref = user ? "/wallet" : "/signin?redirect=%2Fwallet";
   const activeCountryScope: CountryScope = isGiftCardsPage || isTopupPage
     ? "gift-card"
@@ -182,6 +199,7 @@ export function AppHeader() {
       await shopifyService.changeDeliveryCountry(countryCode);
       closeCountryPicker();
     } catch (error) {
+      const { toast } = await import("sonner");
       toast.error(error instanceof Error ? error.message : "Could not change delivery country.");
     } finally { setCountryBusy(false); }
   };
@@ -264,6 +282,7 @@ export function AppHeader() {
             <span>{searchLabel}</span>
           </button>
           {searchOpen && (
+            <Suspense fallback={null}>
             <HeaderSearch
               variant="mobile"
               label={searchLabel}
@@ -271,6 +290,7 @@ export function AppHeader() {
               onQueryChange={setSearchQuery}
               onNavigate={closeMenu}
             />
+            </Suspense>
           )}
           <div className="px-mob-btns">
             <Link className="px-btn ghost" href={walletHref} onClick={closeMenu}>
@@ -426,19 +446,20 @@ export function AppHeader() {
             <Search aria-hidden="true" />
             <span>Search</span>
           </button>
-          <CartSheet
-            initiallyOpen={openCartFromUrl}
-            renderTrigger={(itemCount) => (
-              <button
-                className="px-tool-cart"
-                type="button"
-                aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
-              >
-                <ShoppingCart aria-hidden="true" />
-                <span className="px-tool-cart-count" aria-hidden="true">{itemCount}</span>
-              </button>
-            )}
-          />
+          <button
+            className="px-tool-cart"
+            type="button"
+            aria-label={`Open cart, ${cartItemCount} ${cartItemCount === 1 ? "item" : "items"}`}
+            onClick={() => setCartOpen(true)}
+          >
+            <ShoppingCart aria-hidden="true" />
+            <span className="px-tool-cart-count" aria-hidden="true">{cartItemCount}</span>
+          </button>
+          {cartOpen && (
+            <Suspense fallback={null}>
+              <CartSheet open={cartOpen} onOpenChange={setCartOpen} />
+            </Suspense>
+          )}
           {wallet.isConnected && (
             <Link
               className="px-profile-link px-profile-link-desktop"
@@ -467,13 +488,15 @@ export function AppHeader() {
       </div>
       {searchOpen && (
         <div className="px-search-panel" id="px-header-search-panel">
-          <HeaderSearch
-            variant="desktop"
-            label={searchLabel}
-            query={searchQuery}
-            onQueryChange={setSearchQuery}
-            onNavigate={closeMenu}
-          />
+          <Suspense fallback={null}>
+            <HeaderSearch
+              variant="desktop"
+              label={searchLabel}
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+              onNavigate={closeMenu}
+            />
+          </Suspense>
         </div>
       )}
     </header>

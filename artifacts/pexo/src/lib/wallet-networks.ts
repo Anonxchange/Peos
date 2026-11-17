@@ -15,7 +15,6 @@ export function transactionExplorerUrl(chainId: number, hash: string) {
   const host = explorers.get(chainId);
   return host ? `${host}/tx/${hash}` : undefined;
 }
-export const isWalletConfigured = Boolean(import.meta.env.VITE_REOWN_PROJECT_ID?.trim());
 export const readOnlyWagmiConfig = createConfig({
   chains: evmNetworks,
   connectors: [],

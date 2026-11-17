@@ -1,8 +1,7 @@
 import { Component, createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { WagmiProvider, type Config } from "wagmi";
 import { useLocation } from "wouter";
 import type { Address } from "viem";
-import { isWalletConfigured, readOnlyWagmiConfig } from "./wallet-networks";
+import { isWalletConfigured } from "./wallet-state";
 import { emptyExtraWallet, ExtraWalletStateProvider, type ExtraWalletContextValue } from "./extra-wallet-context";
 
 export interface EvmWalletActivity {
@@ -12,23 +11,25 @@ export interface EvmWalletActivity {
 export interface SendNativeInput { to: string; amount: string; symbol: string; chainId: number }
 export interface SendTokenInput extends SendNativeInput { tokenAddress: string; decimals: number }
 export interface EvmWalletContextValue {
-  configured: boolean; isConnected: boolean; isConnecting: boolean;
+  configured: boolean; ready: boolean; isConnected: boolean; isConnecting: boolean;
   address?: Address; chainId?: number; chainName?: string; error?: string;
   openConnect: () => void; openNetworkSwitcher: () => void; openAccount: () => void;
   disconnect: () => Promise<void>; switchNetwork: (chainId: number) => Promise<void>;
   sendNative: (input: SendNativeInput) => Promise<`0x${string}`>;
   sendToken: (input: SendTokenInput) => Promise<`0x${string}`>;
+  signMessage: (message: string) => Promise<`0x${string}`>;
   recentActivity: EvmWalletActivity[];
 }
 const unavailable = async (): Promise<never> => { throw new Error("Connect a wallet before continuing."); };
 const emptyWallet: EvmWalletContextValue = {
-  configured: isWalletConfigured, isConnected: false, isConnecting: false,
+  configured: isWalletConfigured, ready: !isWalletConfigured, isConnected: false, isConnecting: false,
   openConnect: () => {}, openAccount: () => {}, openNetworkSwitcher: () => {},
   disconnect: async () => {}, switchNetwork: unavailable, sendNative: unavailable, sendToken: unavailable,
+  signMessage: unavailable,
   recentActivity: [],
 };
 const Context = createContext(emptyWallet);
-interface RuntimeProps {
+export interface RuntimeProps {
   onChange: (value: EvmWalletContextValue) => void;
   onExtraChange: (value: ExtraWalletContextValue) => void;
 }
@@ -41,7 +42,7 @@ class RuntimeBoundary extends Component<{ onError: (error: Error) => void; child
 
 export function EvmWalletProvider({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const [runtime, setRuntime] = useState<{ config: Config; Component: ComponentType<RuntimeProps> }>();
+  const [runtime, setRuntime] = useState<{ Component: ComponentType<RuntimeProps> }>();
   const [wallet, setWallet] = useState<EvmWalletContextValue>();
   const [extra, setExtra] = useState(emptyExtraWallet);
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export function EvmWalletProvider({ children }: { children: ReactNode }) {
       try {
         const module = await import("./evm-wallet-provider");
         const published = new Promise<EvmWalletContextValue>((resolve, reject) => { ready.current = { resolve, reject }; });
-        setRuntime({ config: module.wagmiConfig, Component: module.WalletRuntime });
+        setRuntime({ Component: module.WalletRuntime });
         return await published;
       } catch (reason) {
         loadPromise.current = null;
@@ -102,19 +103,17 @@ export function EvmWalletProvider({ children }: { children: ReactNode }) {
     void load().then(value => value[action]()).catch(() => {});
   };
   const value = wallet ?? {
-    ...emptyWallet, isConnecting: loading, error: error || undefined,
+    ...emptyWallet, ready: !isWalletConfigured || !!error, isConnecting: loading, error: error || undefined,
     openConnect: () => launch("openConnect"), openNetworkSwitcher: () => launch("openNetworkSwitcher"),
     openAccount: () => launch("openAccount"),
   };
   const Runtime = runtime?.Component;
-  return <WagmiProvider config={runtime?.config ?? readOnlyWagmiConfig} reconnectOnMount={!!runtime}>
-    <Context.Provider value={value}>
-      <ExtraWalletStateProvider value={extra}>
-        {children}
-        {Runtime && <RuntimeBoundary onError={onRuntimeError}><Runtime onChange={onChange} onExtraChange={setExtra} /></RuntimeBoundary>}
-        {error && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[100] rounded-lg border border-destructive bg-background p-4 text-sm text-destructive sm:left-auto sm:max-w-md">Wallet tools could not load: {error}. Try Connect Wallet again.</div>}
-      </ExtraWalletStateProvider>
-    </Context.Provider>
-  </WagmiProvider>;
+  return <Context.Provider value={value}>
+    <ExtraWalletStateProvider value={extra}>
+      {children}
+      {Runtime && <RuntimeBoundary onError={onRuntimeError}><Runtime onChange={onChange} onExtraChange={setExtra} /></RuntimeBoundary>}
+      {error && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[100] rounded-lg border border-destructive bg-background p-4 text-sm text-destructive sm:left-auto sm:max-w-md">Wallet tools could not load: {error}. Try Connect Wallet again.</div>}
+    </ExtraWalletStateProvider>
+  </Context.Provider>;
 }
 export const useEvmWallet = () => useContext(Context);

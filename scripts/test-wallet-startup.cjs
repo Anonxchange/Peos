@@ -12,7 +12,7 @@ const compile = file => ts.transpileModule(fs.readFileSync(file, "utf8"), {
 
 test("the initial application import graph does not load any wallet connector SDK", () => {
   const visited = new Set();
-  const forbidden = /^(?:@reown\/|@tronweb3\/|@solana\/web3\.js|bitcoinjs-lib|sats-connect|tronweb)/;
+  const forbidden = /^(?:@reown\/|@tronweb3\/|@solana\/web3\.js|bitcoinjs-lib|sats-connect|tronweb|wagmi(?:\/|$)|viem\/chains)/;
   function visit(file) {
     if (visited.has(file)) return;
     visited.add(file);
@@ -46,4 +46,37 @@ test("the initial HTML shows an accessible loader before JavaScript, respecting 
   assert.match(html, /href="\/market\/app-loading\.css"/);
   assert.match(html, /id="root"><div class="app-startup" role="status" aria-live="polite"/);
   assert.ok(html.indexOf("Loading your marketplace") < html.indexOf('src="/market/src/main.tsx"'));
+});
+
+test("wallet hooks, search, cart, and country availability wait until needed", () => {
+  const header = fs.readFileSync(path.join(root, "components/app-header.tsx"), "utf8");
+  const provider = fs.readFileSync(path.join(root, "lib/wallet-provider.tsx"), "utf8");
+  const app = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+  assert.match(header, /enabled:\s*countryOpen/);
+  assert.match(header, /const HeaderSearch = lazy\(/);
+  assert.match(header, /const CartSheet = lazy\(/);
+  assert.doesNotMatch(provider, /from ["']wagmi["']/);
+  assert.match(provider, /import\(["']\.\/evm-wallet-provider["']\)/);
+  assert.match(app, /const WalletToolsRouteProvider = lazy\(/);
+  assert.match(app, /if \(!wallet\.ready\) return/);
+});
+
+test("Pexly icons come only from Hugeicons", () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "../artifacts/pexo/package.json"), "utf8"));
+  for (const dependency of ["lucide-react", "react-icons"]) {
+    assert.ok(!packageJson.dependencies?.[dependency] && !packageJson.devDependencies?.[dependency],
+      `Unexpected icon package dependency: ${dependency}`);
+  }
+  const pending = [root];
+  while (pending.length) {
+    const current = pending.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const file = path.join(current, entry.name);
+      if (entry.isDirectory()) pending.push(file);
+      else if (/\.[cm]?[jt]sx?$/.test(entry.name)) {
+        assert.doesNotMatch(fs.readFileSync(file, "utf8"), /lucide-react|react-icons\//,
+          `Unexpected non-Hugeicons import in ${path.relative(root, file)}`);
+      }
+    }
+  }
 });

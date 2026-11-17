@@ -10,7 +10,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
-import { EvmWalletProvider } from "@/lib/wallet-provider";
+import { EvmWalletProvider, useEvmWallet } from "@/lib/wallet-provider";
 import { CartProvider } from "@/hooks/use-shopify-cart";
 
 // Deferred — invisible until triggered, no need to block initial paint
@@ -36,6 +36,9 @@ const VerifyEmail = lazy(() => import("@/pages/verify-email").then(m => ({ defau
 const SignIn = lazy(() => import("@/pages/signin").then(m => ({ default: m.SignIn })));
 const SignUp = lazy(() => import("@/pages/signup").then(m => ({ default: m.SignUp })));
 const Wallet = lazy(() => import("@/pages/wallet"));
+const WalletToolsRouteProvider = lazy(() =>
+  import("@/lib/evm-wallet-provider").then(module => ({ default: module.WalletToolsRouteProvider })),
+);
 const MobileTopup = lazy(() => import("@/pages/mobile-topup"));
 const UtilityBill = lazy(() => import("@/pages/utility-bill"));
 const Support = lazy(() => import("@/pages/support"));
@@ -137,6 +140,7 @@ function ProtectedRoute({
   skeleton?: React.ReactNode;
 }) {
   const guard = useAuthGuard();
+  const wallet = useEvmWallet();
   const [location] = useLocation();
 
   if (guard === 'pending') return <>{skeleton}</>;
@@ -146,9 +150,13 @@ function ProtectedRoute({
     return <Redirect to={`/signin?redirect=${returnTo}`} />;
   }
 
+  if (!wallet.ready) return <>{skeleton}</>;
+
   return (
     <Suspense fallback={skeleton}>
-      <Component />
+      <WalletToolsRouteProvider>
+        <Component />
+      </WalletToolsRouteProvider>
     </Suspense>
   );
 }
