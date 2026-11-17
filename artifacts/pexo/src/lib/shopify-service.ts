@@ -154,12 +154,12 @@ export async function storefrontApiRequest(queryName: string, variables: Record<
   try {
     await initializeCountryPreferences();
     const country = typeof variables.country === "string" ? variables.country : getMarketCountry();
-    // Read-only browsing must work with the existing deployed catalog functions
-    // even before getLocalization is released. Shopify still applies @inContext
-    // and returns authoritative prices. Never use that as delivery confirmation:
-    // cart mutations below still require a verified enabled market.
+    // Verify catalog context as well as cart context: an unsupported country can
+    // silently fall back to the store's primary market even with @inContext.
+    // Showing an error is safer than displaying prices for the wrong market.
     const needsMarket = [
-      CART_CREATE_MUTATION,
+      PRODUCTS_QUERY, PRODUCT_BY_HANDLE_QUERY, PRODUCT_TYPES_QUERY, COLLECTIONS_QUERY,
+      COLLECTION_BY_HANDLE_QUERY, COLLECTION_PRODUCT_TYPES_QUERY, CART_CREATE_MUTATION,
       CART_LINES_ADD_MUTATION, CART_BUYER_IDENTITY_UPDATE_MUTATION,
     ].includes(queryName);
     if (needsMarket) {

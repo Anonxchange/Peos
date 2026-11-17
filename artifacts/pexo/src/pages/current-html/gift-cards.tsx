@@ -4,7 +4,6 @@ import { CurrentMarketingPage } from "@/components/marketing/current-marketing-p
 import { useGiftCardCategories, useGiftCardProducts, type ReloadlyCategory, type ReloadlyProduct } from "@/hooks/use-reloadly";
 import { useAirtimeOperators, type AirtimeOperator } from "@/hooks/use-airtime-operators";
 import { useDigitalCountry } from "@/lib/country-preferences";
-import { CountrySummary } from "@/components/country-summary";
 
 const HERO_CARDS = [
   { n: "Steam", f: "$20", usd: 20, img: "/marketing-media/gift-cards/steam.jpeg" },
@@ -415,7 +414,6 @@ function GiftShelf({ part }: { part: "top" | "bottom" }) {
     <div className={"gs"} id={"gs-top"}>
       <style>{SHELF_CSS}</style>
       <div className={"gs-w"}>
-        <div className="gs-cty"><CountrySummary /></div>
         {!country && <p className="gs-msg" role="status">Choose a redemption country to see available gift cards and top-ups.</p>}
         {country && !list.isLoading && !list.isError && popular.length === 0 && <p className="gs-msg">No gift cards are available for this country. Use Change to choose another country.</p>}
       </div>

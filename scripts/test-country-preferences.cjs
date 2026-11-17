@@ -35,6 +35,16 @@ function preferences({ saved = {}, detect = async () => "NG", blocked = false } 
   return { api, storage, window };
 }
 
+test("gift-card, top-up and search pages leave country controls in the header", () => {
+  for (const page of [
+    "mobile-topup.tsx", "gift-card-browse.tsx", "current-html/gift-cards.tsx",
+    "current-html/gift-cards-all.tsx", "search.tsx",
+  ]) {
+    const source = fs.readFileSync(`${__dirname}/../artifacts/pexo/src/pages/${page}`, "utf8");
+    assert.doesNotMatch(source, /CountrySummary|openCountryMenu|Change recipient country/);
+  }
+});
+
 test("fresh entry shares one detection across concurrent initializers", async () => {
   let calls = 0;
   const { api } = preferences({ detect: async () => { calls++; return "NG"; } });

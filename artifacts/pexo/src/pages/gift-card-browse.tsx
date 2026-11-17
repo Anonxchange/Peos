@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useGiftCardProducts, useGiftCardCategories, useGiftCardCountries } from "@/hooks/use-reloadly";
 import { mapProducts, ProductCardGrid } from "@/components/gift-card-browse-cards";
 import { useDigitalCountry } from "@/lib/country-preferences";
-import { CountrySummary } from "@/components/country-summary";
 
 // ── Sidebar (shared with main page, but locally defined here to avoid circular imports) ──
 const STATIC_SIDEBAR = [
@@ -202,8 +201,6 @@ export function GiftCardBrowse() {
             )}
           </div>
 
-          {/* Country picker */}
-          <CountrySummary />
         </div>
 
         {/* Sidebar + grid */}
@@ -299,7 +296,6 @@ export function GiftCardBrowse() {
 
         {/* Sort / filter bar */}
         <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          <CountrySummary />
           <div className="relative">
             <button
               onClick={() => setSortOpen(v => !v)}

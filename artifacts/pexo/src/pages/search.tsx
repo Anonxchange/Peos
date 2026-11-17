@@ -3,7 +3,6 @@ import { Link, useLocation, useSearch } from "wouter";
 import { useHead } from "@unhead/react";
 import { Search } from "@/lib/icons";
 import { useUniversalSearch, type SearchKind } from "@/hooks/use-universal-search";
-import { openCountryMenu } from "@/lib/country-preferences";
 import "./search.css";
 
 type Filter = "all" | SearchKind;
@@ -73,12 +72,10 @@ export function SearchPage() {
           <div>
             <b>Digital country: {search.digitalCountry ?? "Not set"}</b>
             <span>Used for gift cards and mobile top-ups, wherever the recipient redeems them.</span>
-            <button type="button" onClick={() => openCountryMenu("digital")} data-testid="button-change-digital-country">Change</button>
           </div>
           <div>
             <b>Delivery country: {search.deliveryCountry ?? "Not set"}</b>
             <span>Used for physical products: where we ship, plus prices and stock.</span>
-            <button type="button" onClick={() => openCountryMenu("delivery")} data-testid="button-change-delivery-country">Change</button>
           </div>
         </div>
 
@@ -139,8 +136,7 @@ export function SearchPage() {
                 </div>
                 {group.needsCountry ? (
                   <div className="pxs-note">
-                    Choose a digital country to search mobile operators.
-                    <button type="button" onClick={() => openCountryMenu("digital")}>Choose country</button>
+                    Choose a digital country in the header to search mobile operators.
                   </div>
                 ) : group.error ? (
                   <div className="pxs-note" role="alert">

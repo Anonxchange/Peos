@@ -12,8 +12,7 @@ import { useGiftCardCountries } from "@/hooks/use-reloadly";
 import { useAirtimeOperators } from "@/hooks/use-airtime-operators";
 import { useTopupCart, type SavedTopup } from "@/hooks/use-topup-cart";
 import { openCartCheckout } from "@/lib/cart-checkout";
-import { useDigitalCountry, openCountryMenu } from "@/lib/country-preferences";
-import { CountrySummary } from "@/components/country-summary";
+import { useDigitalCountry } from "@/lib/country-preferences";
 
 const TOPUP_CSS = `
 .pxg .gsa{--ink:#091e1c;--mute:#52625f;--line:#e3ebe9;--field:#f3f7f6;--lime:#bef264;color:var(--ink);background:#fff;min-height:80vh;padding-bottom:40px}
@@ -645,7 +644,7 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="gsa-w pt-4"><CountrySummary topup /><p className="text-sm mt-2">Choose the recipient’s country and verify their number before purchasing.</p></div>
+              <div className="gsa-w pt-4"><p className="text-sm mt-2">Set the recipient’s country in the header and verify their number before purchasing.</p></div>
               {selectedOperator && selectedCountry ? (
                 <div className={"gsa-w pt-6"}>
                   <TopupDetailView
@@ -666,10 +665,6 @@ const Index = () => {
                   <h1 className={"gsa-hero"}>{"Top-up prepaid phones, from anywhere."}</h1>
 
                   <div className={"gsa-bar"}>
-                    <button type="button" className={"gsa-cs"} onClick={() => openCountryMenu("digital")} aria-label="Change recipient country">
-                      {selectedCountry ? <img className={"gsa-flag"} src={flagUrl(selectedCountry)} alt={""} /> : <span>Country</span>}
-                      <ChevronDown size={18} />
-                    </button>
                     <input
                       type={"tel"}
                       value={phoneNumber}

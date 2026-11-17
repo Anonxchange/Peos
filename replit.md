@@ -11,7 +11,7 @@ Imported from https://github.com/Anonxchange/Pezx. Preserve the original marketp
 - Reown wallet connectivity optionally requires `VITE_REOWN_PROJECT_ID`. Preserve Turnstile and existing authentication.
 - Unified search covers gift cards, airtime operators and physical products at `/en/search?q=...`, using the existing external functions.
 - Digital-service country and Shopify delivery country are independent preferences. Search must not overwrite either.
-- Catalog browsing does not depend on `getLocalization`. Shopify cart actions and delivery changes still require verified enabled markets.
+- Catalog browsing, Shopify cart actions and delivery changes require verified enabled markets. Never bypass `getLocalization` to display prices: Shopify may silently fall back to the primary market for unsupported countries.
 - The original repo includes the updated Shopify function source under `supabase/functions/shopify-storefront`. Releasing that function to the original Supabase project is separate from publishing this frontend. Do not claim live delivery operations are fixed until verified against that external service.
 
 ## Run & Operate

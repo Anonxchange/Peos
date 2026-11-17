@@ -25,7 +25,6 @@ import { useGiftCardCategories } from "@/hooks/use-reloadly";
 import { useAirtimeOperators } from "@/hooks/use-airtime-operators";
 import { useGiftCardCatalog } from "@/hooks/use-gift-card-catalog";
 import { useDigitalCountry } from "@/lib/country-preferences";
-import { CountrySummary } from "@/components/country-summary";
 import {
   airTile,
   giftTile,
@@ -296,7 +295,6 @@ function AllCardsList() {
               {filtersOn ? <span className={"gsa-dot"}></span> : null}
             </button>
           )}
-          <CountrySummary topup={isAir} />
           <label className={"gsa-pill has-lead"}>
             <ArrowUpDown size={20} className={"lead"} />
             <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label={"Sort by"}>
