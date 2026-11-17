@@ -12590,7 +12590,7 @@ html.dark .webflow-auth-shell .auth-button:where(.w-variant-80454ff6-0e3c-af76-c
 
 .export-page .px-tag1 .b{font-weight:800;font-size:15px}
 
-.export-page .px-tag1 .chip{background:#d8ff85;border-radius:8px;padding:6px 12px;font-weight:700;font-size:15px}
+.export-page .px-tag1 .chip{position:static;z-index:auto;animation:none;box-shadow:none;background:#d8ff85;border-radius:8px;padding:6px 12px;font-weight:700;font-size:15px}
 
 .export-page .px-tag1 .big{font-weight:800;font-size:20px}
 
