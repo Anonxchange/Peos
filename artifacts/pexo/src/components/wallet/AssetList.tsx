@@ -1,13 +1,9 @@
-import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useEvmWallet } from "@/lib/evm-wallet-provider";
 import { useEvmWalletData } from "@/hooks/use-evm-wallet-data";
 import { CoinIcon } from "@/components/trading/CoinIcon";
-import { ArrowDownToLine, ExternalLink, RefreshCw, Send, Wallet } from "@/lib/icons";
+import { ArrowDownToLine, ExternalLink, RefreshCw, Send } from "@/lib/icons";
 
 function explorerUrl(namespace: string, chainId: number, value: string) {
   if (namespace === "solana") return `https://solscan.io/account/${value}`;
@@ -24,37 +20,21 @@ function explorerUrl(namespace: string, chainId: number, value: string) {
 
 export function AssetList({ onSend, onReceive }: { onSend?: (symbol: string) => void; onReceive?: () => void }) {
   const wallet = useEvmWallet();
-  const { assets, isLoading, error, refetch } = useEvmWalletData();
-  const [hideZero, setHideZero] = useState(false);
-  const visibleAssets = useMemo(() => hideZero ? assets.filter((asset) => asset.balance > 0) : assets, [assets, hideZero]);
-  const isAnyConnected = wallet.isConnected;
-
-  if (!isAnyConnected) {
-    return (
-      <div className="rounded-xl border border-dashed border-[#d6e0d0] bg-[#fbfcf8] px-5 py-10 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#eef5e6] text-[#557a3f]"><Wallet className="h-5 w-5" /></div>
-        <h3 className="font-bold">Connect to see your assets</h3>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">Balances from connected EVM, Bitcoin, Solana, and TRON accounts appear here when available.</p>
-      </div>
-    );
-  }
+  const { assets, error, refetch } = useEvmWalletData();
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-bold">Wallet assets</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Live balances across connected networks</p>
+          <p className="mt-1 text-xs text-muted-foreground">{wallet.isConnected ? "All supported coins, including zero balances" : "All supported coins · Connect your wallet to see balances"}</p>
         </div>
         <div className="flex items-center justify-between gap-4 sm:justify-end">
-          <div className="flex items-center gap-2">
-            <Checkbox id="hide-zero-assets" checked={hideZero} onCheckedChange={(value) => setHideZero(!!value)} />
-            <Label htmlFor="hide-zero-assets" className="text-xs text-muted-foreground">Hide zero balances</Label>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => void refetch()} className="h-8 gap-1.5 text-xs"><RefreshCw className="h-3.5 w-3.5" />Refresh</Button>
+          <Button variant="ghost" size="sm" disabled={!wallet.isConnected} onClick={() => void refetch()} className="h-8 gap-1.5 text-xs"><RefreshCw className="h-3.5 w-3.5" />Refresh</Button>
         </div>
       </div>
 
+      {error && <p role="alert" className="text-sm text-destructive">{error instanceof Error ? error.message : "Balances could not be loaded. The supported coin list is still shown."}</p>}
       <div className="rounded-xl border border-[#e7ede2] overflow-hidden">
         <Table>
           <TableHeader>
@@ -66,25 +46,7 @@ export function AssetList({ onSend, onReceive }: { onSend?: (symbol: string) => 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? Array.from({ length: 4 }).map((_, index) => (
-              <TableRow key={`asset-skeleton-${index}`}>
-                <TableCell><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-full" /><Skeleton className="h-4 w-24" /></div></TableCell>
-                <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="ml-auto h-8 w-16" /></TableCell>
-              </TableRow>
-            )) : error ? (
-              <TableRow><TableCell colSpan={4} className="py-10 text-center">
-                <p role="alert" className="mb-3 text-sm text-destructive">{error instanceof Error ? error.message : "Assets could not be loaded."}</p>
-                <Button variant="outline" size="sm" onClick={() => void refetch()}>Try again</Button>
-              </TableCell></TableRow>
-            ) : visibleAssets.length === 0 ? (
-              <TableRow><TableCell colSpan={4} className="py-12 text-center">
-                <p className="font-semibold">No supported assets found</p>
-                <p className="mt-1 text-sm text-muted-foreground">{hideZero ? "No non-zero balances were found. Show zero balances or refresh to check again." : "No balances were returned for the connected accounts yet."}</p>
-                {onReceive && <Button variant="outline" size="sm" className="mt-4 gap-2" onClick={onReceive}><ArrowDownToLine className="h-4 w-4" />Receive</Button>}
-              </TableCell></TableRow>
-            ) : visibleAssets.map((asset) => {
+            {assets.map((asset) => {
               const namespace = "eip155";
               const accountAddress = wallet.address;
               const explorer = accountAddress
@@ -102,8 +64,8 @@ export function AssetList({ onSend, onReceive }: { onSend?: (symbol: string) => 
                   </TableCell>
                   <TableCell className="hidden sm:table-cell font-medium">{asset.usdPrice == null ? "—" : `$${asset.usdPrice.toLocaleString("en-US", { maximumFractionDigits: 6 })}`}</TableCell>
                   <TableCell>
-                    <div className="font-bold tabular-nums">{asset.balance.toLocaleString("en-US", { maximumFractionDigits: Math.min(asset.decimals, 8) })} <span className="text-xs font-medium text-muted-foreground">{asset.symbol.toUpperCase()}</span></div>
-                    <div className="text-xs text-muted-foreground">{asset.usdValue == null ? "Value unavailable" : `$${asset.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</div>
+                    <div className="font-bold tabular-nums">{asset.balanceStatus === "ready" ? <>{asset.balance.toLocaleString("en-US", { maximumFractionDigits: Math.min(asset.decimals, 8) })} <span className="text-xs font-medium text-muted-foreground">{asset.symbol.toUpperCase()}</span></> : "—"}</div>
+                    <div className="text-xs text-muted-foreground">{asset.balanceStatus === "disconnected" ? "Not connected" : asset.balanceStatus === "loading" ? "Loading balance…" : asset.balanceStatus === "error" ? "Balance unavailable" : asset.usdValue == null ? "Value unavailable" : `$${asset.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-1">

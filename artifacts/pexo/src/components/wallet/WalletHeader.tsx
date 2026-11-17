@@ -17,6 +17,8 @@ export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const hasAssets = assets.some((asset) => asset.balance > 0);
+  const hasKnownBalance = assets.some((asset) => asset.balanceStatus === "ready");
+  const hasUnavailableBalance = assets.some((asset) => asset.balanceStatus !== "ready");
   const addressLabel = wallet.address ? `${wallet.address.slice(0, 7)}…${wallet.address.slice(-5)}` : "";
   const walletError = wallet.error || "";
 
@@ -80,10 +82,10 @@ export function WalletHeader({ onSend, onReceive }: WalletHeaderProps) {
                   </button>
                 </div>
                 <div className="text-4xl font-bold tracking-tight text-[#091e1c] dark:text-foreground">
-                  {isLoading ? <Skeleton className="h-9 w-36" /> : showBalance ? `$${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "••••••"}
+                  {isLoading ? <Skeleton className="h-9 w-36" /> : showBalance ? hasKnownBalance ? `$${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—" : "••••••"}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {isLoading ? <Skeleton className="h-4 w-40" /> : hasAssets ? "On-chain portfolio value" : "No supported assets found on this network"}
+                  {isLoading ? <Skeleton className="h-4 w-40" /> : hasUnavailableBalance ? "Some balances are unavailable" : hasAssets ? "On-chain portfolio value" : "All supported assets have zero balance"}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

@@ -129,7 +129,7 @@ export default function WalletPage() {
                 </Tabs>
               </div>
 
-              {!wallet.configured ? (
+              {!wallet.configured && (
                 <Card className="border border-[#e7ede2] shadow-[0_16px_40px_rgba(19,56,43,.07)] bg-[#fffefa] dark:bg-card rounded-[18px]">
                   <CardContent className="p-6 sm:p-8">
                     <div className="flex gap-4 items-start">
@@ -144,7 +144,7 @@ export default function WalletPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ) : (
+              )}
                 <Card className="border border-[#e7ede2] shadow-[0_16px_40px_rgba(19,56,43,.07)] bg-[#fffefa] dark:bg-card overflow-hidden rounded-[18px] transition-colors">
                   <CardContent className="p-0">
                     <div className="divide-y divide-border">
@@ -155,7 +155,6 @@ export default function WalletPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
               {wallet.configured && wallet.isConnected && (
                 <section className="px-4 sm:px-0 space-y-3">
                   <div>
